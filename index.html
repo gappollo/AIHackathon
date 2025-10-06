@@ -2,18 +2,23 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Gruppi di Persone</title>
+  <title>Gruppi di colleghi</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f8f9fa;
       margin: 20px;
     }
+    h1 {
+      color: #222;
+    }
     h2 {
       background-color: #007bff;
       color: white;
       padding: 8px;
-      border-radius: 5px;
+      border-radius: 6px;
+      margin-top: 30px;
     }
     table {
       border-collapse: collapse;
@@ -30,44 +35,77 @@
     th {
       background-color: #f1f1f1;
     }
+    input[type="file"] {
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Elenco Gruppi</h1>
+  <h1>Elenco Gruppi da Excel</h1>
+  <p>Carica il file Excel (.xlsx) con i 10 fogli, uno per ogni gruppo:</p>
+  <input type="file" id="fileInput" accept=".xlsx" />
+
   <div id="contenitore"></div>
 
   <script>
-    const gruppi = [
-      "gruppo1.csv", "gruppo2.csv", "gruppo3.csv", "gruppo4.csv", "gruppo5.csv",
-      "gruppo6.csv", "gruppo7.csv", "gruppo8.csv", "gruppo9.csv", "gruppo10.csv"
-    ];
+    const input = document.getElementById('fileInput');
+    const contenitore = document.getElementById('contenitore');
 
-    const contenitore = document.getElementById("contenitore");
+    input.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
 
-    gruppi.forEach((file, index) => {
-      fetch(file)
-        .then(response => response.text())
-        .then(text => {
-          const righe = text.trim().split("\n").map(r => r.split(","));
-          const titolo = document.createElement("h2");
-          titolo.textContent = `Gruppo ${index + 1}`;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        contenitore.innerHTML = ""; // pulisce eventuali dati precedenti
+
+        workbook.SheetNames.forEach((sheetName, index) => {
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+          if (json.length === 0) return; // foglio vuoto
+
+          // Titolo
+          const titolo = document.createElement('h2');
+          titolo.textContent = `Gruppo ${index + 1}: ${sheetName}`;
           contenitore.appendChild(titolo);
 
-          const table = document.createElement("table");
-          righe.forEach((riga, i) => {
-            const tr = document.createElement("tr");
-            riga.forEach(cell => {
-              const cella = document.createElement(i === 0 ? "th" : "td");
-              cella.textContent = cell;
-              tr.appendChild(cella);
-            });
-            table.appendChild(tr);
+          // Crea tabella
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          const tbody = document.createElement('tbody');
+
+          // intestazione
+          const headerRow = document.createElement('tr');
+          json[0].forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
           });
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          // righe dati
+          json.slice(1).forEach(row => {
+            const tr = document.createElement('tr');
+            row.forEach(cell => {
+              const td = document.createElement('td');
+              td.textContent = cell ?? "";
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody);
           contenitore.appendChild(table);
         });
+      };
+
+      reader.readAsArrayBuffer(file);
     });
   </script>
-
 </body>
 </html>
