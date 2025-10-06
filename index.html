@@ -1,1 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Gruppi di Persone</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      margin: 20px;
+    }
+    h2 {
+      background-color: #007bff;
+      color: white;
+      padding: 8px;
+      border-radius: 5px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 30px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
 
+  <h1>Elenco Gruppi</h1>
+  <div id="contenitore"></div>
+
+  <script>
+    const gruppi = [
+      "gruppo1.csv", "gruppo2.csv", "gruppo3.csv", "gruppo4.csv", "gruppo5.csv",
+      "gruppo6.csv", "gruppo7.csv", "gruppo8.csv", "gruppo9.csv", "gruppo10.csv"
+    ];
+
+    const contenitore = document.getElementById("contenitore");
+
+    gruppi.forEach((file, index) => {
+      fetch(file)
+        .then(response => response.text())
+        .then(text => {
+          const righe = text.trim().split("\n").map(r => r.split(","));
+          const titolo = document.createElement("h2");
+          titolo.textContent = `Gruppo ${index + 1}`;
+          contenitore.appendChild(titolo);
+
+          const table = document.createElement("table");
+          righe.forEach((riga, i) => {
+            const tr = document.createElement("tr");
+            riga.forEach(cell => {
+              const cella = document.createElement(i === 0 ? "th" : "td");
+              cella.textContent = cell;
+              tr.appendChild(cella);
+            });
+            table.appendChild(tr);
+          });
+          contenitore.appendChild(table);
+        });
+    });
+  </script>
+
+</body>
+</html>
